@@ -32,7 +32,7 @@ func WithHTTPClient(client *http.Client) ClientOption {
 
 // WithAPIVersion sets a custom API version
 func WithAPIVersion(version string) ClientOption {
-	
+
 	return func(c *Client) {
 		c.APIVersion = version
 	}
@@ -66,7 +66,7 @@ func (c *Client) buildURL(endpoint string) string {
 }
 
 // doRequest performs an HTTP request and decodes the response
-func (c *Client) doRequest(ctx context.Context, method, endpoint string, body interface{}, target interface{}) error {
+func (c *Client) doRequest(ctx context.Context, method, endpoint string, body any, target any) error {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
@@ -104,7 +104,7 @@ func (c *Client) doRequest(ctx context.Context, method, endpoint string, body in
 
 func (c *Client) doMultipartRequest(ctx context.Context, method, endpoint, contentType string, buf io.Reader, target any) error {
 
-	req, err:= http.NewRequestWithContext(ctx, method, c.buildURL(endpoint), buf)
+	req, err := http.NewRequestWithContext(ctx, method, c.buildURL(endpoint), buf)
 
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", c.APIKey))
@@ -133,14 +133,13 @@ func (c *Client) CreateCollection(ctx context.Context, id string) (*CollectionCr
 
 	mpw := multipart.NewWriter(buf)
 
-	idWriter, err:= mpw.CreateFormField("collection_id")
+	idWriter, err := mpw.CreateFormField("collection_id")
 
-	
 	if err != nil {
 		//TODO(Rich): replace error with well formatted error
 		return nil, err
 	}
-	_, err= idWriter.Write([]byte(id))
+	_, err = idWriter.Write([]byte(id))
 
 	if err != nil {
 		//TODO(Rich): replace error with well formatted error
@@ -148,7 +147,7 @@ func (c *Client) CreateCollection(ctx context.Context, id string) (*CollectionCr
 	}
 
 	response := &CollectionCreateResponse{}
-	contentType:= mpw.FormDataContentType()
+	contentType := mpw.FormDataContentType()
 
 	err = mpw.Close()
 	if err != nil {
@@ -178,8 +177,8 @@ func (c *Client) GetAllCollections(ctx context.Context) (*CollectionsResponse, e
 }
 
 // InsertResource inserts a resource into a collection
-func (c *Client) InsertResource(ctx context.Context, request *ResourceInsertRequest) (*StandardResponse, error) {
-	response := &StandardResponse{}
+func (c *Client) insertResource(ctx context.Context, request *ResourceInsertRequest) (*ResourceInsertResponse, error) {
+	response := &ResourceInsertResponse{}
 
 	err := c.doRequest(ctx, http.MethodPost, "resource/insert", request, response)
 	if err != nil {
@@ -201,9 +200,74 @@ func (c *Client) QueryCollection(ctx context.Context, request *QueryRequest) (*S
 	return response, nil
 }
 
-func (c *Client) ChatCollection(ctx context.Context, request interface{})
-func (c * Client) RemoveResource(ctx context.Context, request interface{})
+func (c *Client) ChatCollection(ctx context.Context, request *ChatRequest) (*StandardResponse, error) {
+	response := &StandardResponse{}
 
+	buf := &bytes.Buffer{}
+
+	mpw := multipart.NewWriter(buf)
+
+	idWriter, _ := mpw.CreateFormField("collection_id")
+	_, _ = idWriter.Write([]byte(request.CollectionID))
+
+	msgWriter, _ := mpw.CreateFormField("message")
+	_, _ = msgWriter.Write([]byte(request.Message))
+
+	chWriter, _ := mpw.CreateFormField("chat_history")
+	_, _ = chWriter.Write([]byte(request.ChatHistory))
+
+	contentType := mpw.FormDataContentType()
+
+	err := mpw.Close()
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	err = c.doMultipartRequest(ctx, http.MethodPost, "collection/query", contentType, buf, response)
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	return response, nil
+}
+func (c *Client) RemoveResource(ctx context.Context, request *ResourceDeleteRequest) (*StandardResponse, error) {
+	response := &StandardResponse{}
+
+	buf := &bytes.Buffer{}
+
+	mpw := multipart.NewWriter(buf)
+
+	idWriter, _ := mpw.CreateFormField("collection_id")
+	_, err := idWriter.Write([]byte(request.CollectionID))
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	resIDWriter, _ := mpw.CreateFormField("resource_id")
+	_, err = resIDWriter.Write([]byte(request.ResourceID))
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	contentType := mpw.FormDataContentType()
+
+	err = mpw.Close()
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	err = c.doMultipartRequest(ctx, http.MethodPost, "/resource/remove/", contentType, buf, response)
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+	return response, nil
+}
 
 // DeleteCollection deletes a collection
 func (c *Client) DeleteCollection(ctx context.Context, collectionID string) (*StandardResponse, error) {
@@ -222,8 +286,98 @@ func (c *Client) DeleteCollection(ctx context.Context, collectionID string) (*St
 func (c *Client) Categorize(ctx context.Context, request *CategorizeRequest) (*StandardResponse, error) {
 	response := &StandardResponse{}
 
-	err := c.doRequest(ctx, http.MethodPost, "categorize", request, response)
+	err := c.doRequest(ctx, http.MethodPost, "/categorize", request, response)
 	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (c *Client) TextGeneration(ctx context.Context, request *TextGenerationRequest) (*StandardResponse, error) {
+	response := &StandardResponse{}
+
+	buf := &bytes.Buffer{}
+
+	mpw := multipart.NewWriter(buf)
+
+	msgWriter, _ := mpw.CreateFormField("messages")
+	msg, err := ToJSONSchema(request.Messages)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = msgWriter.Write([]byte(msg))
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	mdlWriter, _ := mpw.CreateFormField("model")
+	_, err = mdlWriter.Write([]byte(request.Model))
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	contentType := mpw.FormDataContentType()
+
+	err = mpw.Close()
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	err = c.doMultipartRequest(ctx, http.MethodPost, "/text-generation/", contentType, buf, response)
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (c *Client) Image2FreeText(ctx context.Context, request *ImageToFreeTextRequest) (*StandardResponse, error) {
+	response := &StandardResponse{}
+
+	err := c.doRequest(ctx, http.MethodPost, "/image-to-text/", request, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (c *Client) DataExtraction(ctx context.Context, request *DataExtractionRequest) (*StandardResponse, error) {
+	response := &StandardResponse{}
+
+	buf := &bytes.Buffer{}
+
+	mpw := multipart.NewWriter(buf)
+
+	webWriter, _:=mpw.CreateFormField("website")
+	_, err:=webWriter.Write([]byte(request.WebURL))
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	jsWriter, _:= mpw.CreateFormField("json_schema")
+
+	js, _:= ToJSONSchema(request.Schema)
+
+	_, err=jsWriter.Write([]byte(js))
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
+		return nil, err
+	}
+
+	contentType:= mpw.FormDataContentType()
+	mpw.Close()
+
+	err= c.doMultipartRequest(ctx, http.MethodPost, "/data-extraction/", contentType, buf, response)
+	if err != nil {
+		//TODO(Rich): replace error with well formatted error
 		return nil, err
 	}
 
