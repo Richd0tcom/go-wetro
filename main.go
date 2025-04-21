@@ -45,7 +45,7 @@ func main() {
 	fmt.Printf("Added text resource. Success: %v, Tokens used: %d\n", textResp.Success, textResp.Tokens)
 
 	// Example: Query the collection
-	queryReq := &wetrocloud.QueryRequest{
+	queryReq := wetrocloud.QueryRequest{
 		CollectionID: collectionResp.CollectionID,
 		Query:        "What is this text about?",
 	}

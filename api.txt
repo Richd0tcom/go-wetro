@@ -1,9 +1,0 @@
-Prefix /v1
-
-Endpoint	Method	Description
-/collection/create/	POST	Used to create a new collection where your resources will be organized.
-/collection/all/	GET	Returns a list of all existing collections.
-/resource/insert/	POST	Allows you to add resources, such as documents or files, into a specified collection.
-/collection/query/	POST	Enables you to search or retrieve information from your collections based on specific prompts.
-/collection/delete/	DELETE	Removes an entire collection and its associated resources.
-/categorize/	POST	Categorizes your data according to specific rules or schema definitions.
