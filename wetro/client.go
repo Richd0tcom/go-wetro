@@ -11,15 +11,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-)
 
-type RAGClient struct {
-	client *APIClient
-}
-type ToolsClient struct {
-	client *APIClient
-}
+	
+)
 
 type APIClient struct {
 	baseURL    string
@@ -38,7 +32,7 @@ type ClientOption func(*APIClient)
 
 func NewClient(apiKey string, options ...ClientOption) *Client {
 	apiClient := &APIClient{
-		baseURL:    "https://api.wetrocloud.com",
+		baseURL:    "https://api.wetrocloud.com/",
 		apiKey:     apiKey,
 		apiVersion: "v1",
 		httpClient: &http.Client{},
@@ -79,6 +73,7 @@ func WithAPIVersion(version string) ClientOption {
 func (c *APIClient) doRequest(ctx context.Context, method, endpoint string, params map[string]string, data interface{}, response interface{}) error {
 	url := fmt.Sprintf("%s%s%s", c.baseURL, c.apiVersion, endpoint)
 
+	fmt.Println("url: ",url)
 	// Add referrer parameter
 	if params == nil {
 		params = make(map[string]string)
@@ -117,14 +112,18 @@ func (c *APIClient) doRequest(ctx context.Context, method, endpoint string, para
 		return err
 	}
 	defer resp.Body.Close()
+	// bodyBytes, err := io.ReadAll(resp.Body)
+	// bodyString := string(bodyBytes)
+	// fmt.Println(bodyString)
 
 	// Check for errors
 	if resp.StatusCode >= 400 {
 		var errorResp struct {
-			Error   string      `json:"error"`
-			Detail  string      `json:"detail"`
-			Payload any `json:"payload,omitempty"`
+			Error   string `json:"error"`
+			Detail  string `json:"detail"`
+			Payload any    `json:"payload,omitempty"`
 		}
+		fmt.Println("kjhflkjdhoj", resp.StatusCode)
 		if err := json.NewDecoder(resp.Body).Decode(&errorResp); err != nil {
 			return &APIError{
 				Message:    "Failed to parse error response",
@@ -294,131 +293,3 @@ func (c *APIClient) upload(ctx context.Context, reader io.Reader, collectionID, 
 	return url, nil
 }
 
-func (c *RAGClient) CreateCollection(ctx context.Context, id string) (*CollectionCreateResponse, error) {
-
-	requestData := map[string]string{
-		"collection_id": id,
-	}
-	response := &CollectionCreateResponse{}
-
-	err := c.client.doRequest(ctx, http.MethodPost, "collection/create", map[string]string{}, requestData, response)
-	if err != nil {
-		//TODO(Rich): replace error with well formatted error
-		return nil, err
-	}
-
-	return response, nil
-}
-
-// GetCollection retrieves a collection
-func (c *APIClient) GetCollection(ctx context.Context, collectionID string) (*GetCollectionResponse, error) {
-	var response GetCollectionResponse
-	err := c.doRequest(ctx, "GET", fmt.Sprintf("/v1/get/%s/", collectionID), nil, nil, &response)
-	return &response, err
-}
-
-// ListCollections lists all collections
-func (c *APIClient) ListCollections(ctx context.Context) (*ListCollectionResponse, error) {
-	var response ListCollectionResponse
-	err := c.doRequest(ctx, http.MethodGet, "/v1/list/", nil, nil, &response)
-	return &response, err
-}
-
-// QueryCollection queries a collection
-func (c *APIClient) QueryCollection(ctx context.Context, request QueryRequest) (*StandardResponse, error) {
-	var response StandardResponse
-
-	//validate query request
-
-	err := c.doRequest(ctx, "POST", fmt.Sprintf("/v1/query/%s/", request.CollectionID), nil, request, &response)
-	return &response, err
-}
-
-// ChatWithCollection chats with a collection
-func (c *APIClient) ChatWithCollection(ctx context.Context, request ChatRequest) (*StandardResponse, error) {
-	var response StandardResponse
-
-	err := c.doRequest(ctx, "POST", fmt.Sprintf("/v1/chat/%s/", request.CollectionID), nil, request, &response)
-	return &response, err
-}
-
-// InsertResource inserts a resource into a collection
-func (c *APIClient) InsertResource(ctx context.Context, collectionID string, resource any, resourceType ResourceType) (*ResourceInsertResponse, error) {
-	// Handle file upload if resource is a file path
-	var resourceURL string
-	var response ResourceInsertResponse
-	if path, ok := resource.(string); ok && !strings.HasPrefix(path, "http") {
-		url, err := c.uploadFile(ctx, collectionID, path)
-		if err != nil {
-			return nil, err
-		}
-		resourceURL = url
-	} else if _, ok := resource.(io.Reader); ok {
-		url, err := c.uploadBytes(ctx, collectionID, resource)
-		if err != nil {
-			return nil, err
-		}
-		resourceURL = url
-	} else {
-		resourceURL = fmt.Sprintf("%v", resource)
-	}
-	payload := ResourceInsertRequest{
-		CollectionID: collectionID,
-		Resource:     resourceURL,
-		Type:         resourceType,
-	}
-
-	err := c.doRequest(ctx, "POST", "/v1/insert/", nil, payload, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, err
-}
-
-// RemoveResource removes a resource from a collection
-func (c *APIClient) RemoveResource(ctx context.Context, request ResourceDeleteRequest) (*ResourceDeleteResponse, error) {
-	var response ResourceDeleteResponse
-	err := c.doRequest(ctx, "DELETE", fmt.Sprintf("/v1/remove/"), nil, request, &response)
-	return &response, err
-}
-
-// DeleteCollection deletes a collection
-func (c *APIClient) DeleteCollection(ctx context.Context, collectionID string) (*DeleteCollectionResponse, error) {
-	var response DeleteCollectionResponse
-	err := c.doRequest(ctx, "DELETE", fmt.Sprintf("/v1/delete/%s/", collectionID), nil, map[string]any{
-		"collection_id": collectionID,
-	}, &response)
-	return &response, err
-}
-
-// CategorizeData categorizes data
-func (c *APIClient) CategorizeData(ctx context.Context, payload CategorizeRequest) (*StandardResponse, error) {
-	var response StandardResponse
-
-	err := c.doRequest(ctx, "POST", "/v1/categorize/", nil, payload, &response)
-	return &response, err
-}
-
-// GenerateText generates text
-func (c *APIClient) GenerateText(ctx context.Context, payload TextGenerationRequest) (*StandardResponse, error) {
-	var response StandardResponse
-
-	err := c.doRequest(ctx, "POST", "/v1/generate/", nil, payload, &response)
-	return &response, err
-}
-
-// ImageToText generates text from an image
-func (c *APIClient) ImageToText(ctx context.Context, payload ImageToTextRequest) (*StandardResponse, error) {
-	var response StandardResponse
-
-	err := c.doRequest(ctx, "POST", "/v1/image-to-text/", nil, payload, &response)
-	return &response, err
-}
-
-// ExtractData extracts data from a website
-func (c *APIClient) ExtractData(ctx context.Context, payload DataExtractionRequest) (*StandardResponse, error) {
-	var response StandardResponse
-
-	err := c.doRequest(ctx, "POST", "/v1/extract/", nil, payload, &response)
-	return &response, err
-}

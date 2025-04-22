@@ -69,7 +69,7 @@ type CollectionCreateResponse struct {
 
 // Collection represents a collection in the WetroCloud system
 type CollectionItem struct {
-	CollectionID string `json:"colection_id"`
+	CollectionID string `json:"collection_id"`
 	CreatedAt    string `json:"created_at"`
 }
 
