@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-
-	
 )
 
 type APIClient struct {
@@ -73,7 +71,7 @@ func WithAPIVersion(version string) ClientOption {
 func (c *APIClient) doRequest(ctx context.Context, method, endpoint string, params map[string]string, data interface{}, response interface{}) error {
 	url := fmt.Sprintf("%s%s%s", c.baseURL, c.apiVersion, endpoint)
 
-	fmt.Println("url: ",url)
+	fmt.Println("url: ", url)
 	// Add referrer parameter
 	if params == nil {
 		params = make(map[string]string)
@@ -292,4 +290,3 @@ func (c *APIClient) upload(ctx context.Context, reader io.Reader, collectionID, 
 
 	return url, nil
 }
-
