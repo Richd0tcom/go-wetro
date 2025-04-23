@@ -1,197 +1,189 @@
-# WetroCloud SDK for Go
+# WetroCloud API Wrapper for Go
 
-A Go SDK for interacting with the WetroCloud API, which allows you to build, scale, and deploy with Retrieval Augmented Generation (RAG) and LLM agents.
+A Go wrapper for interacting with the WetroCloud API, providing access to Retrieval Augmented Generation (RAG) and AI tools functionality.
 
 ## Installation
 
 ```bash
-go get github.com/Richd0tcom/wetrocloud-sdk-go
+go get github.com/Richd0tcom/go-wetro
 ```
 
 ## Getting Started
 
-To use the SDK, import it in your Go code:
+To use the wrapper, import it in your Go code:
 
 ```go
-import "github.com/Richd0tcom/wetrocloud-sdk-go/wetrocloud"
+import "github.com/Richd0tcom/go-wetro/wetro"
 ```
 
 ### Initialize the Client
 
 ```go
-client := wetrocloud.NewClient(
-    "https://api.wetrocloud.com",
-    "your-api-key",
-)
+client := wetro.NewClient("your-api-key")
 ```
 
-You can also customize the client with options:
+You can customize the client with options:
 
 ```go
+
 // Custom HTTP client with timeout
 httpClient := &http.Client{
     Timeout: 30 * time.Second,
 }
 
-client := wetrocloud.NewClient(
-    "https://api.wetrocloud.com",
-    "your-api-key",
+
+client := wetro.NewClient("your-api-key", 
     wetrocloud.WithHTTPClient(httpClient),
     wetrocloud.WithAPIVersion("v2"), // If you need a different API version
 )
 ```
 
-## Usage Examples
+## Features
 
-### Create a Collection
+### RAG (Retrieval-Augmented Generation)
 
-```go
-ctx := context.Background()
-collection, err := client.CreateCollection(ctx, "My Collection")
-if err != nil {
-    log.Fatalf("Failed to create collection: %v", err)
-}
-
-fmt.Printf("Collection created with ID: %s\n", collection.CollectionID)
-```
-
-### Get All Collections
+The RAG client provides functionality for managing collections and performing semantic search:
 
 ```go
 ctx := context.Background()
-collections, err := client.GetAllCollections(ctx)
+
+
+// Create a collection
+resp, err := client.RAG.CreateCollection(ctx, "my-docs")
 if err != nil {
-    log.Fatalf("Failed to get collections: %v", err)
+    log.Fatal(err)
 }
 
-for _, collection := range collections.Collections {
-    fmt.Printf("Collection: %s (ID: %s)\n", collection.Name, collection.ID)
-}
-```
-
-### Add Resources to a Collection
-
-#### Text Resource
-
-```go
-ctx := context.Background()
-resp, err := client.TextResource(ctx, collectionID, "This is a sample text", nil)
+// Get collection details
+collection, err := client.RAG.GetCollection(ctx, "my-docs")
 if err != nil {
-    log.Fatalf("Failed to add text resource: %v", err)
+    log.Fatal(err)
 }
-```
 
-#### File Resource
-
-```go
-ctx := context.Background()
-fileURL := "https://example.com/document.pdf"
-resp, err := client.FileResource(ctx, collectionID, fileURL, nil)
+// List all collections
+collections, err := client.RAG.ListCollections(ctx)
 if err != nil {
-    log.Fatalf("Failed to add file resource: %v", err)
+    log.Fatal(err)
 }
-```
 
-#### Web Resource
-
-```go
-ctx := context.Background()
-webURL := "https://example.com/article"
-resp, err := client.WebResource(ctx, collectionID, webURL, nil)
+// Insert a resource
+insertResp, err := client.RAG.InsertResource(ctx, "my-docs", "document text", wetro.ResourceTypeText)
 if err != nil {
-    log.Fatalf("Failed to add web resource: %v", err)
+    log.Fatal(err)
 }
-```
 
-#### JSON Resource
-
-```go
-ctx := context.Background()
-jsonData := map[string]interface{}{
-    "title": "Example Document",
-    "content": "This is the content of the document",
-}
-resp, err := client.JSONResource(ctx, collectionID, jsonData, nil)
+// Query a collection
+queryResp, err := client.RAG.QueryCollection(ctx, wetro.QueryRequest{
+    CollectionID: "my-docs",
+    Query:        "What is this about?",
+})
 if err != nil {
-    log.Fatalf("Failed to add JSON resource: %v", err)
+    log.Fatal(err)
+}
+
+// Chat with a collection
+chatResp, err := client.RAG.ChatWithCollection(ctx, wetro.ChatRequest{
+    CollectionID: "my-docs",
+    Message:      "Explain this to me",
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+// Remove a resource
+removeResp, err := client.RAG.RemoveResource(ctx, wetro.ResourceDeleteRequest{
+    CollectionID: "my-docs",
+    ResourceID:   "resource-id",
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+// Delete a collection
+deleteResp, err := client.RAG.DeleteCollection(ctx, "my-docs")
+if err != nil {
+    log.Fatal(err)
 }
 ```
 
-#### YouTube Resource
+### AI Tools
+
+The Tools client provides various AI-powered utilities:
 
 ```go
 ctx := context.Background()
-youtubeURL := "https://www.youtube.com/watch?v=example"
-resp, err := client.YoutubeResource(ctx, collectionID, youtubeURL, nil)
+
+
+// Categorize text
+categorizeResp, err := client.Tools.CategorizeData(ctx, wetro.CategorizeRequest{
+    Type:     wetro.ResourceTypeText,
+    Resource: "This is a technical document",
+    JSONSchema: json.RawMessage(`{
+        "type": "object",
+        "properties": {
+            "category": {"type": "string"},
+            "confidence": {"type": "number"}
+        }
+    }`),
+    Categories: []string{"Technology", "Science"},
+    Prompt:     "Categorize this text",
+})
 if err != nil {
-    log.Fatalf("Failed to add YouTube resource: %v", err)
+    log.Fatal(err)
 }
-```
 
-#### Audio Resource
-
-```go
-ctx := context.Background()
-audioURL := "https://example.com/audio.mp3"
-resp, err := client.AudioResource(ctx, collectionID, audioURL, nil)
+// Generate text
+generateResp, err := client.Tools.GenerateText(ctx, wetro.TextGenerationRequest{
+    Messages: []wetro.MessageObject{
+        {
+            Role:    "user",
+            Content: "Write a short paragraph",
+        },
+    },
+    Model: wetro.GPT35Turbo,
+})
 if err != nil {
-    log.Fatalf("Failed to add audio resource: %v", err)
-}
-```
-
-### Query a Collection
-
-```go
-ctx := context.Background()
-queryReq := &wetrocloud.QueryRequest{
-    CollectionID: collectionID,
-    Query:        "What is this document about?",
-    MaxResults:   wetrocloud.IntPtr(5),   // Optional
-    Confidence:   wetrocloud.FloatPtr(0.7), // Optional
+    log.Fatal(err)
 }
 
-resp, err := client.QueryCollection(ctx, queryReq)
+// Convert image to text
+imageResp, err := client.Tools.ImageToText(ctx, wetro.ImageToTextRequest{
+    ImageURL: "https://example.com/image.jpg",
+    Query:    "Describe this image",
+})
 if err != nil {
-    log.Fatalf("Failed to query collection: %v", err)
+    log.Fatal(err)
 }
 
-fmt.Printf("Response: %s\n", resp.Response)
-```
-
-### Delete a Collection
-
-```go
-ctx := context.Background()
-resp, err := client.DeleteCollection(ctx, collectionID)
+// Extract data from a webpage
+extractResp, err := client.Tools.ExtractData(ctx, wetro.DataExtractionRequest{
+    WebURL: "https://example.com",
+    Schema: map[string]interface{}{
+        "type": "object",
+        "properties": map[string]interface{}{
+            "title":    map[string]interface{}{"type": "string"},
+            "content":  map[string]interface{}{"type": "string"},
+        },
+    },
+})
 if err != nil {
-    log.Fatalf("Failed to delete collection: %v", err)
+    log.Fatal(err)
 }
-```
-
-### Categorize Data
-
-```go
-ctx := context.Background()
-data := "This is a sample text that needs to be categorized"
-schema := map[string]interface{}{
-    "categories": []string{"Business", "Technology", "Science"},
-}
-
-req := &wetrocloud.CategorizeRequest{
-    Data:   data,
-    Schema: schema,
-}
-
-resp, err := client.Categorize(ctx, req)
-if err != nil {
-    log.Fatalf("Failed to categorize data: %v", err)
-}
-
-fmt.Printf("Categorization response: %s\n", resp.Response)
 ```
 
 ## Supported Resource Types
 
+The SDK supports the following resource types:
+
+```go
+const (
+    ResourceTypeText    ResourceType = "text"
+    ResourceTypeWeb     ResourceType = "web"
+    ResourceTypeFile    ResourceType = "file"
+    ResourceTypeJSON    ResourceType = "json"
+    ResourceTypeYouTube ResourceType = "youtube"
+)
+```
 The WetroCloud API supports various resource types:
 
 - **File**: Various file types including .csv, .docx, .epub, .hwp, .ipynb, .jpeg, .jpg, .mbox, .md, .mp3, .mp4, .pdf, .png, .ppt, .pptm, .pptx.
@@ -200,6 +192,39 @@ The WetroCloud API supports various resource types:
 - **Web**: Web-based resources, such as websites.
 - **YouTube**: YouTube videos with YouTube URLs.
 - **Audio**: Various audio file types including .3ga, .8svx, .aac, .ac3, .aif, .aiff, .alac, .amr, .ape, .au, .dss, .flac, .flv, .m4a, .m4b, .m4p, .m4r, .mp3, .mpga, .ogg, .oga, .mogg, .opus, .qcp, .tta, .voc, .wav, .wma, .wv.
+
+## Available Chat Models
+
+The SDK supports various chat models for text generation:
+
+```go
+const (
+    ChatGPT4Latest            ChatModel = "chatgpt-4o-latest"
+    Claude35Haiku20241022     ChatModel = "claude-3-5-haiku-20241022"
+    Claude35Sonnet20240620    ChatModel = "claude-3-5-sonnet-20240620"
+    Claude35Sonnet20241022    ChatModel = "claude-3-5-sonnet-20241022"
+    GPT4TurboPreview          ChatModel = "gpt-4-turbo-preview"
+    GPT45Preview              ChatModel = "gpt-4.5-preview"
+    GPT4O                     ChatModel = "gpt-4o"
+    GPT4OMini                 ChatModel = "gpt-4o-mini"
+    // ... and more
+)
+```
+
+## Error Handling
+
+The SDK uses a custom error type for API errors:
+
+```go
+type APIError struct {
+    Message    string
+    StatusCode int 
+    Payload    any
+}
+```
+
+## Documentation
+For more details, check out the official API documentation: [Wetrocloud Docs](https://docs.wetrocloud.com/introduction)
 
 ## License
 

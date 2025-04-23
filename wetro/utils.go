@@ -43,7 +43,7 @@ func parseError(resp *http.Response) string {
 
 	var errors []string
 	for field, messages := range errorData {
-		if msgList, ok := messages.([]interface{}); ok {
+		if msgList, ok := messages.([]any); ok {
 			var msgStrings []string
 			for _, msg := range msgList {
 				msgStrings = append(msgStrings, fmt.Sprintf("%v", msg))
