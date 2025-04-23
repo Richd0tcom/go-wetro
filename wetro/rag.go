@@ -1,3 +1,8 @@
+// Copyright 2025 Richd0tcom. All rights reserved.
+// Use of this source code is governed by an MIT style
+// license that can be found in the LICENSE file.
+
+
 package wetrocloud
 
 import (
@@ -8,6 +13,8 @@ import (
 	"strings"
 )
 
+// RAGClient provides methods for working with RAG (Retrieval-Augmented Generation) functionality.
+// It handles collection management and querying.
 type RAGClient struct {
 	client *APIClient
 }

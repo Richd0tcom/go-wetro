@@ -2,7 +2,8 @@ package wetrocloud
 
 import "encoding/json"
 
-// ChatModel represents the available chat models
+// ChatModel represents the available chat models supported by the API.
+// Each model has specific capabilities and performance characteristics.
 type ChatModel string
 
 const (
@@ -43,7 +44,8 @@ const (
 	Qwen25Coder32B            ChatModel = "qwen-2.5-coder-32b"
 )
 
-// ResourceType represents the type of resource
+// ResourceType represents the type of resource that can be processed by the API.
+// Different resource types may have different processing requirements and capabilities.
 type ResourceType string
 
 const (
@@ -54,25 +56,34 @@ const (
 	ResourceTypeYouTube ResourceType = "youtube"
 )
 
-// StandardResponse represents the standard API response structure
+// StandardResponse represents the standard API response structure used across most endpoints.
+// It includes success status, token usage, and the actual response data.
 type StandardResponse struct {
 	Success  bool `json:"success"`
 	Tokens   int  `json:"tokens"`
 	Response any  `json:"response,omitempty"`
 }
 
-// CollectionCreateResponse contains the response from creating a collection
+// CollectionCreateResponse contains the response from creating a collection.
+// It includes the success status and the ID of the created collection.
 type CollectionCreateResponse struct {
 	Success      bool   `json:"success"`
 	CollectionID string `json:"collection_id"`
 }
 
-// Collection represents a collection in the WetroCloud system
+// CollectionItem represents a collection in the WetroCloud system.
+// It contains basic information about a collection.
 type CollectionItem struct {
+
+	// The unique identifier of the collection
 	CollectionID string `json:"collection_id"`
-	CreatedAt    string `json:"created_at"`
+
+	// The timestamp when the collection was created
+	CreatedAt string `json:"created_at"`
 }
 
+// GetCollectionResponse contains the response from retrieving a collection.
+// It includes success status, whether the collection was found, and its ID.
 type GetCollectionResponse struct {
 	Success      bool   `json:"success"`
 	Found        bool   `json:"found"`
@@ -94,20 +105,23 @@ type ListCollectionResponse struct {
 	Results []CollectionItem `json:"results"`
 }
 
-// ResourceInsertRequest represents a request to insert a resource
+// ResourceInsertRequest represents a request to insert a resource into a collection.
+// It specifies the collection, resource type, and the actual resource content.
 type ResourceInsertRequest struct {
-	CollectionID string `json:"collection_id"`
+	CollectionID string       `json:"collection_id"`
 	Type         ResourceType `json:"type"`
-	Resource     string `json:"resource"`
+	Resource     string       `json:"resource"`
 }
 
-// contains the response from inserting a resource
+// ResourceInsertResponse contains the response from inserting a resource.
+// It includes status, the ID of the inserted resource, and token usage.
 type ResourceInsertResponse struct {
 	ResourceID string `json:"resource_id"`
 	Success    bool   `json:"success"`
 	Tokens     int    `json:"tokens,omitempty"`
 }
 
+// ResourceDeleteRequest represents a request to remove a resource from a collection.
 type ResourceDeleteRequest struct {
 	CollectionID string `json:"collection_id"`
 	ResourceID   string `json:"resource_id"`
@@ -119,24 +133,34 @@ type ResourceDeleteResponse struct {
 
 // QueryRequest represents a request to query a collection
 type QueryRequest struct {
-	CollectionID    string          `json:"collection_id"`
-	Query           string          `json:"request_query"`
-	Model           ChatModel       `json:"model,omitempty"`
-	JSONSchema      json.RawMessage `json:"json_schema,omitempty"`
+	CollectionID string `json:"collection_id"`
+	Query        string `json:"request_query"`
+
+	// (optional) The model to use for processing
+	Model ChatModel `json:"model,omitempty"`
+
+	//(Optional) JSON schema for response formatting
+	JSONSchema json.RawMessage `json:"json_schema,omitempty"`
+
+	// (Optional) rules for schema validation.
+	//must be present if JSONSchema is used
 	JSONSchemaRules json.RawMessage `json:"json_schema_rules,omitempty"`
-	Stream          bool            `json:"stream"`
+
+	Stream bool `json:"stream"`
 }
 
-// QueryResponse represents the response from querying a collection
+// Message represents a single message in a chat conversation.
+// It's a map of string key-value pairs for flexibility.
+type Message map[string]string
 
+// ChatRequest represents a request to chat with a collection.
+// It supports conversation history and streaming options.
 type ChatRequest struct {
 	CollectionID string    `json:"collection_id"`
 	Message      string    `json:"message"`
 	ChatHistory  []Message `json:"chat_history"`
 	Stream       bool      `json:"stream"`
 }
-type Message map[string]string
-
 
 type DeleteCollectionResponse struct {
 	Message string `json:"message"`
@@ -144,35 +168,50 @@ type DeleteCollectionResponse struct {
 }
 
 // CategorizeRequest represents a request to categorize data
+// It supports custom schemas and categories for classification.
 type CategorizeRequest struct {
-	Type       ResourceType    `json:"type"`
-	Resource   string          `json:"resource"`
+	Type     ResourceType `json:"type"`
+	Resource string       `json:"resource"`
+
+	// Schema for the categorization result
 	JSONSchema json.RawMessage `json:"json_schema"`
-	Categories []string        `json:"categories"`
-	Prompt     string          `json:"prompt"`
+
+	// Available categories for classification
+	Categories []string `json:"categories"`
+
+	// Custom prompt for categorization
+	Prompt string `json:"prompt"`
 }
 
 type MessageObject struct {
-	Role    string `json:"role"`
+
+	// The role of the message sender (e.g., "user", "assistant")
+	Role string `json:"role"`
+
+	// The actual message content
 	Content string `json:"content"`
 }
 
+// TextGenerationRequest represents a request to generate text.
 type TextGenerationRequest struct {
 	Messages []MessageObject `json:"messages"`
 	Model    ChatModel       `json:"model,omitempty"`
 }
 
+// ImageToTextRequest represents a request to generate text from an image.
 type ImageToTextRequest struct {
 	ImageURL string `json:"image_url"`
 	Query    string `json:"request_query"`
 }
 
+// DataExtractionRequest represents a request to extract data from a website.
+// It includes the website URL and a schema for the expected data structure.
 type DataExtractionRequest struct {
 	WebURL string `json:"website"`
 	Schema any    `json:"json_schema"`
 }
 
-//Errors
+// Errors
 // APIError represents an error from the Wetrocloud API
 type APIError struct {
 	Message    string

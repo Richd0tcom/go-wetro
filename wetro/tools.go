@@ -1,3 +1,8 @@
+// Copyright 2025 Richd0tcom. All rights reserved.
+// Use of this source code is governed by an MIT style
+// license that can be found in the LICENSE file.
+
+
 package wetrocloud
 
 import (
@@ -50,7 +55,7 @@ func (c *ToolsClient) ImageToText(ctx context.Context, payload ImageToTextReques
 func (c *ToolsClient) ExtractData(ctx context.Context, payload DataExtractionRequest) (StandardResponse, error) {
 	var response StandardResponse
 
-	err := c.client.doRequest(ctx, "POST", "/data-extraction/", nil, payload, &response)
+	err := c.client.doRequest(ctx, http.MethodPost, "/data-extraction/", nil, payload, &response)
 
 	if err != nil {
 		return StandardResponse{}, err
