@@ -1,3 +1,12 @@
+// Copyright 2025 Richd0tcom. All rights reserved.
+// Use of this source code is governed by an MIT style
+// license that can be found in the LICENSE file.
+
+/*
+Package wetrocloud provides a Go client for interacting with the WetroCloud API.
+It supports both RAG (Retrieval-Augmented Generation) and various AI tools functionality.
+*/
+
 package wetrocloud
 
 import (
@@ -13,6 +22,8 @@ import (
 	"path/filepath"
 )
 
+// APIClient represents the main client for interacting with the WetroCloud API.
+// It handles authentication, request formatting, and response processing.
 type APIClient struct {
 	baseURL    string
 	apiKey     string
@@ -20,12 +31,15 @@ type APIClient struct {
 	httpClient *http.Client
 }
 
+// Client represents the main entry point for the WetroCloud SDK.
+// It provides access to both RAG and Tools functionality.
 type Client struct {
 	RAG   *RAGClient
 	Tools *ToolsClient
 }
 
-// ClientOption is a function that configures a Client
+// ClientOption represents a function that can modify the APIClient configuration.
+// It's used for setting various client options during initialization.
 type ClientOption func(*APIClient)
 
 func NewClient(apiKey string, options ...ClientOption) *Client {
@@ -71,7 +85,6 @@ func WithAPIVersion(version string) ClientOption {
 func (c *APIClient) doRequest(ctx context.Context, method, endpoint string, params map[string]string, data interface{}, response interface{}) error {
 	url := fmt.Sprintf("%s%s%s", c.baseURL, c.apiVersion, endpoint)
 
-	fmt.Println("url: ", url)
 	// Add referrer parameter
 	if params == nil {
 		params = make(map[string]string)
@@ -188,9 +201,9 @@ func (c *APIClient) doMultipartRequest(ctx context.Context, method, endpoint str
 	// Check for errors
 	if resp.StatusCode >= 400 {
 		var errorResp struct {
-			Error   string      `json:"error"`
-			Detail  string      `json:"detail"`
-			Payload interface{} `json:"payload"`
+			Error   string `json:"error"`
+			Detail  string `json:"detail"`
+			Payload any    `json:"payload"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&errorResp); err != nil {
 			return &APIError{
