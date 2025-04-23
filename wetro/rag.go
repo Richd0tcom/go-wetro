@@ -58,7 +58,11 @@ func (c *RAGClient) ListCollections(ctx context.Context) (ListCollectionResponse
 func (c *RAGClient) QueryCollection(ctx context.Context, request QueryRequest) (StandardResponse, error) {
 	var response StandardResponse
 
-	//TODO: validate query request
+	v:= NewValidator()
+
+	if !request.Validate(v) {
+		return StandardResponse{}, *NewValidationError("Validation Error", v.errors)
+	}
 
 	err := c.client.doRequest(ctx, http.MethodPost, "/collection/query/", nil, request, &response)
 	if err != nil {

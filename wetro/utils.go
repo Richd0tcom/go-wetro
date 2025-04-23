@@ -55,3 +55,60 @@ func parseError(resp *http.Response) string {
 	}
 	return strings.Join(errors, "; ")
 }
+
+type errorFields map[string]string
+
+// ValidationError Custom error type for better error handling.
+type ValidationError struct {
+	Fields  map[string]string
+	Message string
+}
+
+func (e ValidationError) Error() string {
+	return e.Message
+}
+
+type validator struct {
+	errors errorFields
+}
+
+// New returns a new Validator instance.
+func NewValidator() *validator {
+	return &validator{errors: make(errorFields)}
+}
+
+func NewValidationError(message string, fields errorFields) *ValidationError {
+	return &ValidationError{
+		Fields:  fields,
+		Message: message,
+	}
+}
+
+// NewWithStore returns a new Validator instance with a store.
+// func NewWithStore(ctx context.Context, store db.Store) *Validator {
+//	return &Validator{
+//		Errors: make(ErrorFields),
+//		store:  store,
+//		ctx:    ctx,
+//	}
+//}
+
+// Valid returns true if the errors map doesn't contain any entries.
+func (v *validator) Valid() bool {
+	return len(v.errors) == 0
+}
+
+// AddError adds an error message to the map (so long as no entry already exists for
+// the given key).
+func (v *validator) AddError(key, message string) {
+	if _, exists := v.errors[key]; !exists {
+		v.errors[key] = message
+	}
+}
+
+// Check adds an error message to the map only if a validation check is not 'ok'.
+func (v *validator) Check(ok bool, key, message string) {
+	if !ok {
+		v.AddError(key, message)
+	}
+}

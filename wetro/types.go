@@ -113,6 +113,12 @@ type ResourceInsertRequest struct {
 	Resource     string       `json:"resource"`
 }
 
+func (r *ResourceInsertRequest) Validate(v *validator) bool {
+	v.Check(r.CollectionID != "", "collection_id", "collection_id should not be empty")
+	v.Check(r.Type != "", "type", "resource type should not be empty")
+	return v.Valid()
+}
+
 // ResourceInsertResponse contains the response from inserting a resource.
 // It includes status, the ID of the inserted resource, and token usage.
 type ResourceInsertResponse struct {
@@ -147,6 +153,16 @@ type QueryRequest struct {
 	JSONSchemaRules json.RawMessage `json:"json_schema_rules,omitempty"`
 
 	Stream bool `json:"stream"`
+}
+
+func (r *QueryRequest) Validate(v *validator) bool {
+	v.Check(r.CollectionID != "", "collection_id", "collection_id should not be empty")
+
+	if len(r.JSONSchema) > 0 {
+		v.Check(len(r.JSONSchemaRules) > 0, "json_schema_rules", "must have json_schema_rules if json_schema is used")
+	}
+	
+	return v.Valid()
 }
 
 // Message represents a single message in a chat conversation.
