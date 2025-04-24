@@ -232,7 +232,7 @@ func (c *APIClient) uploadBytes(ctx context.Context, collectionID string, resour
 	}
 	var reader io.Reader = resource.(io.Reader)
 
-	id, err := generateUUID()
+	id, err := GenerateID()
 	if err != nil {
 		return "", err
 	}

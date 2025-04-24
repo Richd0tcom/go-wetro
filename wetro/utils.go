@@ -17,7 +17,8 @@ func ToJSONSchema(schema any) (string, error) {
 	return string(b), nil
 }
 
-func generateUUID() (string, error) {
+//helper function to Generate Random ID's (UUID format) for Collection
+func GenerateID() (string, error) {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
@@ -83,15 +84,6 @@ func NewValidationError(message string, fields errorFields) *ValidationError {
 		Message: message,
 	}
 }
-
-// NewWithStore returns a new Validator instance with a store.
-// func NewWithStore(ctx context.Context, store db.Store) *Validator {
-//	return &Validator{
-//		Errors: make(ErrorFields),
-//		store:  store,
-//		ctx:    ctx,
-//	}
-//}
 
 // Valid returns true if the errors map doesn't contain any entries.
 func (v *validator) Valid() bool {
