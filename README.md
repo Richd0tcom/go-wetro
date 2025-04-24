@@ -13,7 +13,7 @@ go get github.com/Richd0tcom/go-wetro
 To use the wrapper, import it in your Go code:
 
 ```go
-import "github.com/Richd0tcom/go-wetro/wetro"
+import ( wetro "github.com/Richd0tcom/go-wetro/wetro")
 ```
 
 ### Initialize the Client
@@ -33,8 +33,8 @@ httpClient := &http.Client{
 
 
 client := wetro.NewClient("your-api-key", 
-    wetrocloud.WithHTTPClient(httpClient),
-    wetrocloud.WithAPIVersion("v2"), // If you need a different API version
+    wetro.WithHTTPClient(httpClient),
+    wetro.WithAPIVersion("v2"), // If you need a different API version
 )
 ```
 
@@ -85,6 +85,7 @@ if err != nil {
 chatResp, err := client.RAG.ChatWithCollection(ctx, wetro.ChatRequest{
     CollectionID: "my-docs",
     Message:      "Explain this to me",
+    ChatHistory:  []Message{} //history of the chat. use an empty list if this is the beginning of the chat
 })
 if err != nil {
     log.Fatal(err)

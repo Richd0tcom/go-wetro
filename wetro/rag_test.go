@@ -1,4 +1,4 @@
-package wetrocloud
+package wetro
 
 import (
 	"context"

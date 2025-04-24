@@ -6,7 +6,7 @@
 Package wetrocloud provides a Go client for interacting with the WetroCloud API.
 It supports both RAG (Retrieval-Augmented Generation) and various AI tools functionality.
 */
-package wetrocloud
+package wetro
 
 import (
 	"bytes"
