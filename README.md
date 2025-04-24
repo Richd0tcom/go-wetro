@@ -13,7 +13,7 @@ go get github.com/Richd0tcom/go-wetro
 To use the wrapper, import it in your Go code:
 
 ```go
-import ( wetro "github.com/Richd0tcom/go-wetro/wetro")
+import ( "github.com/Richd0tcom/go-wetro/wetro")
 ```
 
 ### Initialize the Client
