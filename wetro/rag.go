@@ -15,11 +15,11 @@ import (
 
 // RAGClient provides methods for working with RAG (Retrieval-Augmented Generation) functionality.
 // It handles collection management and querying.
-type RAGClient struct {
-	client *APIClient
+type ragClient struct {
+	client *apiClient
 }
 
-func (c *RAGClient) CreateCollection(ctx context.Context, id string) (CollectionCreateResponse, error) {
+func (c *ragClient) CreateCollection(ctx context.Context, id string) (CollectionCreateResponse, error) {
 
 	requestData := map[string]string{
 		"collection_id": id,
@@ -35,7 +35,7 @@ func (c *RAGClient) CreateCollection(ctx context.Context, id string) (Collection
 }
 
 // GetCollection retrieves a collection
-func (c *RAGClient) GetCollection(ctx context.Context, collectionID string) (GetCollectionResponse, error) {
+func (c *ragClient) GetCollection(ctx context.Context, collectionID string) (GetCollectionResponse, error) {
 	var response GetCollectionResponse
 	err := c.client.doRequest(ctx, http.MethodGet, fmt.Sprintf("/collection/get/%s/", collectionID), nil, nil, &response)
 	if err != nil {
@@ -45,7 +45,7 @@ func (c *RAGClient) GetCollection(ctx context.Context, collectionID string) (Get
 }
 
 // ListCollections lists all collections
-func (c *RAGClient) ListCollections(ctx context.Context) (ListCollectionResponse, error) {
+func (c *ragClient) ListCollections(ctx context.Context) (ListCollectionResponse, error) {
 	var response ListCollectionResponse
 	err := c.client.doRequest(ctx, http.MethodGet, "/collection/all/", nil, nil, &response)
 	if err != nil {
@@ -55,13 +55,13 @@ func (c *RAGClient) ListCollections(ctx context.Context) (ListCollectionResponse
 }
 
 // QueryCollection queries a collection
-func (c *RAGClient) QueryCollection(ctx context.Context, request QueryRequest) (StandardResponse, error) {
+func (c *ragClient) QueryCollection(ctx context.Context, request QueryRequest) (StandardResponse, error) {
 	var response StandardResponse
 
-	v:= NewValidator()
+	v:= newValidator()
 
-	if !request.Validate(v) {
-		return StandardResponse{}, *NewValidationError("Validation Error", v.errors)
+	if !request.validate(v) {
+		return StandardResponse{}, *newValidationError("Validation Error", v.errors)
 	}
 
 	err := c.client.doRequest(ctx, http.MethodPost, "/collection/query/", nil, request, &response)
@@ -72,7 +72,7 @@ func (c *RAGClient) QueryCollection(ctx context.Context, request QueryRequest) (
 }
 
 // ChatWithCollection chats with a collection
-func (c *RAGClient) ChatWithCollection(ctx context.Context, request ChatRequest) (StandardResponse, error) {
+func (c *ragClient) ChatWithCollection(ctx context.Context, request ChatRequest) (StandardResponse, error) {
 	var response StandardResponse
 
 	err := c.client.doRequest(ctx, http.MethodPost, "/collection/chat/", nil, request, &response)
@@ -83,7 +83,7 @@ func (c *RAGClient) ChatWithCollection(ctx context.Context, request ChatRequest)
 }
 
 // InsertResource inserts a resource into a collection
-func (c *RAGClient) InsertResource(ctx context.Context, collectionID string, resource any, resourceType ResourceType) (ResourceInsertResponse, error) {
+func (c *ragClient) InsertResource(ctx context.Context, collectionID string, resource any, resourceType ResourceType) (ResourceInsertResponse, error) {
 	// Handle file upload if resource is a file path
 	var resourceURL string
 	var response ResourceInsertResponse
@@ -116,7 +116,7 @@ func (c *RAGClient) InsertResource(ctx context.Context, collectionID string, res
 }
 
 // RemoveResource removes a resource from a collection
-func (c *RAGClient) RemoveResource(ctx context.Context, request ResourceDeleteRequest) (ResourceDeleteResponse, error) {
+func (c *ragClient) RemoveResource(ctx context.Context, request ResourceDeleteRequest) (ResourceDeleteResponse, error) {
 	var response ResourceDeleteResponse
 	err := c.client.doRequest(ctx, http.MethodDelete, "/resource/remove/", nil, request, &response)
 	if err != nil {
@@ -126,7 +126,7 @@ func (c *RAGClient) RemoveResource(ctx context.Context, request ResourceDeleteRe
 }
 
 // DeleteCollection deletes a collection
-func (c *RAGClient) DeleteCollection(ctx context.Context, collectionID string) (DeleteCollectionResponse, error) {
+func (c *ragClient) DeleteCollection(ctx context.Context, collectionID string) (DeleteCollectionResponse, error) {
 	var response DeleteCollectionResponse
 	err := c.client.doRequest(ctx, http.MethodDelete, "/collection/delete/", nil, map[string]any{
 		"collection_id": collectionID,

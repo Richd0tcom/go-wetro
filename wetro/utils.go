@@ -78,11 +78,11 @@ type validator struct {
 }
 
 // New returns a new Validator instance.
-func NewValidator() *validator {
+func newValidator() *validator {
 	return &validator{errors: make(errorFields)}
 }
 
-func NewValidationError(message string, fields errorFields) *ValidationError {
+func newValidationError(message string, fields errorFields) *ValidationError {
 	return &ValidationError{
 		Fields:  fields,
 		Message: message,
@@ -90,21 +90,21 @@ func NewValidationError(message string, fields errorFields) *ValidationError {
 }
 
 // Valid returns true if the errors map doesn't contain any entries.
-func (v *validator) Valid() bool {
+func (v *validator) valid() bool {
 	return len(v.errors) == 0
 }
 
 // AddError adds an error message to the map (so long as no entry already exists for
 // the given key).
-func (v *validator) AddError(key, message string) {
+func (v *validator) addError(key, message string) {
 	if _, exists := v.errors[key]; !exists {
 		v.errors[key] = message
 	}
 }
 
 // Check adds an error message to the map only if a validation check is not 'ok'.
-func (v *validator) Check(ok bool, key, message string) {
+func (v *validator) check(ok bool, key, message string) {
 	if !ok {
-		v.AddError(key, message)
+		v.addError(key, message)
 	}
 }

@@ -23,7 +23,7 @@ import (
 
 // APIClient represents the main client for interacting with the WetroCloud API.
 // It handles authentication, request formatting, and response processing.
-type APIClient struct {
+type apiClient struct {
 	baseURL    string
 	apiKey     string
 	apiVersion string
@@ -33,16 +33,16 @@ type APIClient struct {
 // Client represents the main entry point for the WetroCloud SDK.
 // It provides access to both RAG and Tools functionality.
 type Client struct {
-	RAG   *RAGClient
-	Tools *ToolsClient
+	RAG   *ragClient
+	Tools *toolsClient
 }
 
 // ClientOption represents a function that can modify the APIClient configuration.
 // It's used for setting various client options during initialization.
-type ClientOption func(*APIClient)
+type ClientOption func(*apiClient)
 
 func NewClient(apiKey string, options ...ClientOption) *Client {
-	apiClient := &APIClient{
+	apiClient := &apiClient{
 		baseURL:    "https://api.wetrocloud.com/",
 		apiKey:     apiKey,
 		apiVersion: "v1",
@@ -54,34 +54,34 @@ func NewClient(apiKey string, options ...ClientOption) *Client {
 	}
 
 	return &Client{
-		RAG:   NewRAGClient(apiClient),
-		Tools: NewToolsClient(apiClient),
+		RAG:   newRAGClient(apiClient),
+		Tools: newToolsClient(apiClient),
 	}
 }
 
-func NewRAGClient(api *APIClient) *RAGClient {
-	return &RAGClient{client: api}
+func newRAGClient(api *apiClient) *ragClient {
+	return &ragClient{client: api}
 }
 
-func NewToolsClient(api *APIClient) *ToolsClient {
-	return &ToolsClient{client: api}
+func newToolsClient(api *apiClient) *toolsClient {
+	return &toolsClient{client: api}
 }
 
 // WithHTTPClient sets a custom HTTP client
 func WithHTTPClient(client *http.Client) ClientOption {
-	return func(c *APIClient) {
+	return func(c *apiClient) {
 		c.httpClient = client
 	}
 }
 
 // WithAPIVersion sets a custom API version
 func WithAPIVersion(version string) ClientOption {
-	return func(c *APIClient) {
+	return func(c *apiClient) {
 		c.apiVersion = version
 	}
 }
 
-func (c *APIClient) doRequest(ctx context.Context, method, endpoint string, params map[string]string, data interface{}, response interface{}) error {
+func (c *apiClient) doRequest(ctx context.Context, method, endpoint string, params map[string]string, data interface{}, response interface{}) error {
 	url := fmt.Sprintf("%s%s%s", c.baseURL, c.apiVersion, endpoint)
 
 	// Add referrer parameter
@@ -155,7 +155,7 @@ func (c *APIClient) doRequest(ctx context.Context, method, endpoint string, para
 	return nil
 }
 
-func (c *APIClient) doMultipartRequest(ctx context.Context, method, endpoint string, data map[string]interface{}, response interface{}) error {
+func (c *apiClient) doMultipartRequest(ctx context.Context, method, endpoint string, data map[string]interface{}, response interface{}) error {
 	url := fmt.Sprintf("%s%s%s", c.baseURL, c.apiVersion, endpoint)
 
 	// Create multipart form
@@ -225,7 +225,7 @@ func (c *APIClient) doMultipartRequest(ctx context.Context, method, endpoint str
 	return nil
 }
 
-func (c *APIClient) uploadBytes(ctx context.Context, collectionID string, resource any) (string, error) {
+func (c *apiClient) uploadBytes(ctx context.Context, collectionID string, resource any) (string, error) {
 
 	if _, isReadable := resource.(io.Reader); !isReadable {
 		return "", fmt.Errorf("Invalid Resource")
@@ -240,7 +240,7 @@ func (c *APIClient) uploadBytes(ctx context.Context, collectionID string, resour
 }
 
 // Helper method for file upload
-func (c *APIClient) uploadFile(ctx context.Context, collectionID string, filePath string) (string, error) {
+func (c *apiClient) uploadFile(ctx context.Context, collectionID string, filePath string) (string, error) {
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -254,7 +254,7 @@ func (c *APIClient) uploadFile(ctx context.Context, collectionID string, filePat
 	return c.upload(ctx, file, collectionID, filepath.Base(filePath))
 }
 
-func (c *APIClient) upload(ctx context.Context, reader io.Reader, collectionID, filename string) (string, error) {
+func (c *apiClient) upload(ctx context.Context, reader io.Reader, collectionID, filename string) (string, error) {
 	uploadURL := "https://file-upload-service-python.vercel.app/upload/"
 
 	var buf bytes.Buffer

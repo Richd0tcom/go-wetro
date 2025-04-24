@@ -58,7 +58,7 @@ func TestToolsClient(t *testing.T) {
 	defer server.Close()
 
 	// Create a test client
-	client := NewClient("test-api-key", func(c *APIClient) {
+	client := NewClient("test-api-key", func(c *apiClient) {
 		c.baseURL = server.URL + "/"
 	})
 	toolsClient := client.Tools
